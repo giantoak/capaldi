@@ -73,7 +73,6 @@ def capyldi(df, algorithms='all'):
                  for alg in xtab_algs
                  if alg in algorithms}
 
-
     if not isinstance(df, pd.DataFrame):
         if isinstance(pd.Series, df):
             df = df.reset_index()
@@ -134,8 +133,9 @@ def capyldi(df, algorithms='all'):
 
         t_p_key = '{}_{}'.format(time_pair[0], time_pair[1])
 
-        xtab = pd.pivot_table(df, 'count_col', time_pair[0], time_pair[1],
-                              aggfunc=sum).fillna(0)
+        if len(xtab_algs) > 0:
+            xtab = pd.pivot_table(df, 'count_col', time_pair[0], time_pair[1],
+                                  aggfunc=sum).fillna(0)
 
         for algorithm in tqdm(xtab_algs, desc='Analyzing', leave=False):
             if algorithm == 'mmpp':
