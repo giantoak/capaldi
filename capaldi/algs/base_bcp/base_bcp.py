@@ -6,8 +6,8 @@ def alg(df):
     """
     from ..opencpu_support import opencpu_url_fmt
     from ..opencpu_support import r_list_fmt
-    from ..opencpu_support import request_with_retries
     import numpy as np
+    from ..opencpu_support import unorthodox_request_with_retries
     import pandas as pd
 
     url = opencpu_url_fmt('library',  # 'cran',
@@ -15,14 +15,7 @@ def alg(df):
                           'R',
                           'bcp')
     params = {'y': r_list_fmt(df.count_col.tolist())}
-    r = request_with_retries([url, params])
-    if not r.ok:
-        return {'error_1': r.text}
-
-    url_2 = r.headers['Location']+'R/.val/json?force=true'
-    r = request_with_retries([url_2], 'get')
-    if not r.ok:
-        return {'error_2': r.text}
+    r = unorthodox_request_with_retries([url, params])
 
     r_json = r.json()
     return pd.DataFrame({'date_col': df.date_col.tolist(),

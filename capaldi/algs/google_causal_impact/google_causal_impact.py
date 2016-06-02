@@ -10,6 +10,7 @@ def alg(dates, values, bp):
     from ..opencpu_support import r_ts_fmt
     from ..opencpu_support import request_with_retries
     from ..opencpu_support import opencpu_root
+    from ..opencpu_support import unorthodox_request_with_retries
 
     url = opencpu_url_fmt('library',  # 'github', 'google',
                           'CausalImpact',
@@ -22,20 +23,22 @@ def alg(dates, values, bp):
               'pre.period': 'c(1,{})'.format(bp),
               'post.period': 'c({},{})'.format(bp + 1, length)}
 
-    r = request_with_retries([url, params])
-    if not r.ok:
-        return {'error': r.text}
-    res = r.text.split('\n')[0]
+    r = unorthodox_request_with_retries(url, params)
 
-    # url2 = 'https://public.opencpu.org/ocpu/library/base/R/get/'
-    # params2 = {'x':'"series"','pos':res[10:21]}
-    url2 = '{}{}/json?force=true'.format(opencpu_root, res)
-    r2 = request_with_retries([url2], 'get')
-    if not r2.ok:
-        return {'error': r2.text}
+    # r = request_with_retries([url, params])
+    # if not r.ok:
+    #     return {'error': r.text}
+    # res = r.text.split('\n')[0]
 
-    data = r2.json()
+    # url2 = '{}{}/json?force=true'.format(opencpu_root, res)
+    # r2 = request_with_retries([url2], 'get')
+    # if not r2.ok:
+    #     return {'error': r2.text}
+
+    # data = r2.json()
+    data = r.json()
     data['date'] = dates
+
     return {'date': data['date'], 'series': data['series']}
 
 

@@ -24,6 +24,23 @@ def request_with_retries(arg_list, request_type='post'):
     return r
 
 
+def unorthodox_request_with_retries(arg_list):
+    """
+
+    :param list arg_list:
+    :returns: `` --
+    """
+    r = request_with_retries(arg_list)
+    if not r.ok:
+        return {'error_1': r.text}
+
+    url = url_fmt(r.headers['Location'], 'R', '.val', 'json?force=true')
+    r = request_with_retries([url], 'get')
+    if not r.ok:
+        return {'error_2': r.text}
+    return r
+
+
 def opencpu_url_fmt(*args):
     return '{}/{}'.format(opencpu_url, url_fmt(args))
 
