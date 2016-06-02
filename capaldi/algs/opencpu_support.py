@@ -5,9 +5,16 @@ MAX_RETRIES = 5
 
 
 def request_with_retries(arg_list, request_type='post'):
+    """
+
+    :param list arg_list:
+    :param str request_type:
+    :returns: `` --
+    """
     if request_type == 'post':
         from requests import post as req
-    elif request_type == 'get':
+    else:
+        # elif request_type == 'get':
         from requests import get as req
 
     for i in range(MAX_RETRIES):
@@ -61,3 +68,57 @@ def r_array_fmt(x, dim_one, dim_two):
     :returns: `str` -- variables formatted as r array
     """
     return 'array({}, dim={})'.format(r_list_fmt(x), r_list_fmt([dim_one, dim_two]))
+
+
+def get_time_series(dates, values):
+    """
+
+    :param dates:
+    :param values:
+    :returns: `dict` - Dictionary of time series values from STL
+    """
+    import requests
+    # need to post data as a time series object to stl
+    url = opencpu_url_fmt('library',
+                          'stats',
+                          'R',
+                          'stl')
+    params = {'x': r_ts_fmt(values, 12),
+              's.window': 4}
+    r = requests.post(url, params)
+
+    # stl returns an object of class stl with components
+    #  time.series: a multiple time series with columns seasonal, trend and remainder.
+    #  weights: the final robust weights (all one if fitting is not done robustly).
+    # #$call	the matched call ... etc
+    #  This object is not JSON-Serializable!
+    #  We need to do another opencpu call to extract the time.series object
+
+    # gets the tmp storage address of the R object from the first request
+    result = r.text.split('\n')[0]
+    url2 = opencpu_url_fmt('library',
+                           'base',
+                           'R',
+                           'get',
+                           'json')
+    # using get to extract the time.series object
+    params2 = {'x': '"time.series"',
+               'pos': result[10:21]}
+
+    r = request_with_retries([url2, params2])
+    if not r.ok:
+        return {'error': r.text}
+
+    r_json = r.json()
+
+    return {
+        'seasonal':
+        [{'date': d, 'value': v} for d, v in zip(dates,
+                                                 [x[0] for x in r_json])],
+        'trend':
+        [{'date': d, 'value': v} for d, v in zip(dates,
+                                                 [x[1] for x in r_json])],
+        'remainder':
+        [{'date': d, 'value': v} for d, v in zip(dates,
+                                                 [x[2] for x in r_json])]
+    }
