@@ -1,1 +1,1 @@
-from capyldi import capyldi
+from .capaldi import capaldi

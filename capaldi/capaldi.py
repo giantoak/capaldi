@@ -1,15 +1,15 @@
 from collections import defaultdict
 import numpy as np
-import numpy.random as npr
 import pandas as pd
-from scipy.stats import chisquare
 from tqdm import tqdm
 
-from opencpu_tools import base_bcp
-from opencpu_tools import giant_oak_arima
-from opencpu_tools import giant_oak_mmpp
-# from opencpu_tools import twitter_anomaly_detection
-from opencpu_tools import twitter_breakout
+from .algs import base_bcp
+from .algs import giant_oak_mmpp
+from .algs import giant_oak_arima
+# from .algs import google_causal_impact
+# from .algs import twitter_anomaly_detection
+from .algs import twitter_breakout
+
 
 error_str_dict = {
     "type": "Capyldi requires an object that can be converted "
@@ -23,28 +23,17 @@ MIN_BUCKETS = 10
 MAX_EMPTY_BUCKETS = 30
 
 
-def _mmpp_sanity_check(xtab):
-    xtab_vals = np.ravel(xtab)
-    sim_vals = npr.poisson(np.mean(xtab_vals), len(xtab_vals))
-    p_val = chisquare(xtab_vals, sim_vals).pvalue
-
-    if p_val < P_VAL:
-        return {'p_warning':
-                    'Null hypothesis rejected: {} < {}'.format(p_val, P_VAL)}
-    return dict()
-
-
-def capyldi(df, algorithms='all'):
+def capaldi(df, algorithms='all'):
     """
     :param pandas.DataFrame df:
     :param str|list algorithms:
     :returns: `dict` --
     """
 
-    xtab_algs = {'mmpp': giant_oak_mmpp}
-    time_period_algs = {'arima': giant_oak_arima,
-                        'bcp': base_bcp,
-                        'twitter_breakout': twitter_breakout}
+    xtab_algs = {'mmpp': giant_oak_mmpp.alg}
+    time_period_algs = {'arima': giant_oak_arima.alg,
+                        'bcp': base_bcp.alg,
+                        'twitter_breakout': twitter_breakout.alg}
 
     time_pairs = [('hhour', 'wday'),
                   ('hour', 'wday'),
@@ -144,7 +133,7 @@ def capyldi(df, algorithms='all'):
                     result_dict['mmpp'][t_p_key]['error'] = 'No wday'
                     continue
 
-                warn_dict = _mmpp_sanity_check(xtab)
+                warn_dict = giant_oak_mmpp.sanity_check(xtab)
                 for key in warn_dict:
                     result_dict['mmpp'][t_p_key][key] = warn_dict[key]
 
