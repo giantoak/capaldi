@@ -41,6 +41,54 @@ def unorthodox_request_with_retries(arg_list):
     return r
 
 
+def dictified_json(ocpu_json_dict,
+                   col_to_df_map=None,
+                   keep_orig_cols=False,
+                   fix_nans=None):
+    """
+    Take a JSON 'dict' where values are lists;
+    convert empty lists to None and single-value lists to single values
+    :param dict[str, list[str]] ocpu_json_dict:
+    :param dict[str, list[str]] col_to_df_map:
+    :param bool keep_orig_cols:
+    :param list[str] fix_nans:
+    :returns: `dict` --
+    """
+    for key in ocpu_json_dict:
+        if len(ocpu_json_dict[key]) == 0:
+            ocpu_json_dict[key] = None
+        elif len(ocpu_json_dict[key]) == 1:
+            ocpu_json_dict[key] = ocpu_json_dict[key][0]
+
+    if fix_nans is not None:
+        if isinstance(fix_nans, str):
+            fix_nans = [fix_nans]
+
+        from numpy import nan
+        for key in fix_nans:
+            if isinstance(ocpu_json_dict[key], list):
+                ocpu_json_dict[key] = [x if x not in ['NA', 'NAN'] else nan
+                                       for x in ocpu_json_dict[key]]
+            elif ocpu_json_dict[key] in ['NA', 'NAN']:
+                ocpu_json_dict[key] = nan
+
+    if col_to_df_map is not None:
+        import pandas as pd
+        for df_name in col_to_df_map:
+            ocpu_json_dict[df_name] = pd.DataFrame({col: ocpu_json_dict[col]
+                                                    for col in col_to_df_map[df_name]})
+        if not keep_orig_cols:
+            for df_name in col_to_df_map:
+                for col in col_to_df_map[df_name]:
+                    try:
+                        del ocpu_json_dict[col]
+                    except KeyError:
+                        # Column already deleted
+                        pass
+
+    return ocpu_json_dict
+
+
 def opencpu_url_fmt(*args):
     return '{}/{}'.format(opencpu_url, url_fmt(args))
 
