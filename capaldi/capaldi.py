@@ -12,7 +12,7 @@ from .algs import twitter_breakout
 
 
 error_str_dict = {
-    "type": "Capyldi requires an object that can be converted "
+    "type": "Capaldi requires an object that can be converted "
     "to a two-column data frame.",
     "date_col": "The left column must be dates or times.",
     "count_col": "The right column must be integers or floats."
