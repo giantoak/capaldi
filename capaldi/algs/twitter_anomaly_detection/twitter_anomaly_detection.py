@@ -17,9 +17,8 @@ def alg(dates, values):
                           'AnomalyDetectionTs',
                           'json')
 
-    data = {'x':
-                [OrderedDict([('timestamp', str(d)), ('count', v)])
-                 for d, v in zip(dates, values)]
+    data = {'x': [OrderedDict([('timestamp', str(d)), ('count', v)])
+                  for d, v in zip(dates, values)]
             }
 
     headers = {'Content-Type': 'application/json'}
