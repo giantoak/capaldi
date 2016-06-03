@@ -48,6 +48,7 @@ Algorithm |Source
 :--- |:---
 ARIMA |[source](https://github.com/giantoak/goarima)
 Markov-Modulated Poisson Processes (MMPP) |[source](https://github.com/giantoak/mmppr)
+Barry and Hartigan's Product Partition Model |[source](https://cran.r-project.org/web/packages/bcp/index.html)
 
 #### In-progress
 

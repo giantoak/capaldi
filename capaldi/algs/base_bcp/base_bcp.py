@@ -2,7 +2,7 @@ def alg(df):
     """
 
     param pandas.DataFrame df: two-column dataframe: date_col, count_col
-    :returns: `dict` --
+    :returns: `pandas.DataFrame` --
     """
     from ..opencpu_support import opencpu_url_fmt
     from ..opencpu_support import r_list_fmt
