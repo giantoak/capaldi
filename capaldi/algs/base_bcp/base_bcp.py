@@ -20,7 +20,3 @@ def alg(df):
 
     return pd.DataFrame({'date_col': df.date_col.tolist(),
                          'posterior_prob': r_json['posterior.prob']})
-
-
-def sanity_check():
-    return dict()

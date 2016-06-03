@@ -33,16 +33,3 @@ def alg(xtab):
                          columns=xtab.columns)
             for key in r.json()}
 
-
-def sanity_check(xtab, p_cutoff=0.05):
-    import numpy as np
-    import numpy.random as npr
-    from scipy.stats import chisquare
-
-    xtab_vals = np.ravel(xtab)
-    sim_vals = npr.poisson(np.mean(xtab_vals), len(xtab_vals))
-    p_val = chisquare(xtab_vals, sim_vals).pvalue
-
-    if p_val < p_cutoff:
-        return {'p_warning': 'Null hypothesis rejected: {} < {}'.format(p_val, p_cutoff)}
-    return dict()

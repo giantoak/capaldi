@@ -10,6 +10,10 @@ from .algs import giant_oak_arima
 # from .algs import twitter_anomaly_detection
 from .algs import twitter_breakout
 
+from .checks import too_few_buckets
+from .checks import too_many_empties
+from .checks import isnt_poisson
+
 
 error_str_dict = {
     "type": "Capaldi requires an object that can be converted "
@@ -17,10 +21,6 @@ error_str_dict = {
     "date_col": "The left column must be dates or times.",
     "count_col": "The right column must be integers or floats."
 }
-
-P_VAL = 0.05
-MIN_BUCKETS = 10
-MAX_EMPTY_BUCKETS = 30
 
 
 def capaldi(df, algorithms='all'):
@@ -133,9 +133,8 @@ def capaldi(df, algorithms='all'):
                     result_dict['mmpp'][t_p_key]['error'] = 'No wday'
                     continue
 
-                warn_dict = giant_oak_mmpp.sanity_check(xtab)
-                for key in warn_dict:
-                    result_dict['mmpp'][t_p_key][key] = warn_dict[key]
+                if isnt_poisson.check(xtab):
+                    result_dict['mmpp'][t_p_key]['p_warning'] = ['Poisson Distribution rejected.']
 
                 if 'wday' != time_pair[1]:
                     result_dict['mmpp']['wday_warning'] = 'swapping wday'
@@ -157,23 +156,19 @@ def capaldi(df, algorithms='all'):
         count_df = df.set_index('date_col').groupby(
             pd.TimeGrouper(time_period)).sum().fillna(0).reset_index()
 
-        if count_df.count_col.shape[0] < MIN_BUCKETS:
+        if too_few_buckets.check(count_df):
             for algorithm in time_period_algs:
                 result_dict[algorithm][time_period]['bucket_warning'] = \
-                    'Not enough buckets: {} < {}'.format(count_df.count_col.shape[0],
-                                                         MIN_BUCKETS)
-
+                    'Not enough buckets'
             # If there aren't enough buckets now,
             # there won't be enough buckets with less granularity.
             # So end
             break
 
-        empty_buckets = np.sum(count_df.count_col.values < 1)
-        if empty_buckets > MAX_EMPTY_BUCKETS:
+        if too_many_empties.check(count_df):
             for algorithm in time_period_algs:
                 result_dict[algorithm][time_period]['empty_warning'] = \
-                    'Too many empty buckets: {} > {}'.format(empty_buckets,
-                                                             MAX_EMPTY_BUCKETS)
+                    'Too many empty buckets'
 
         for algorithm in tqdm(time_period_algs, desc='Analyzing', leave=False):
             result_dict[algorithm][time_period]['result'] = \

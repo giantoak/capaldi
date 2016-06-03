@@ -30,7 +30,3 @@ def alg(df):
     r_json['df']['dates'] = df.date_col
 
     return r_json
-
-
-def sanity_check():
-    return dict()

@@ -28,7 +28,3 @@ def alg(dates, values):
         if r.ok:
             return r.json()
     return {'error': r.text}
-
-
-def sanity_check():
-    return dict()

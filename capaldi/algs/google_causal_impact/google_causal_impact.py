@@ -40,7 +40,3 @@ def alg(dates, values, bp):
     data['date'] = dates
 
     return {'date': data['date'], 'series': data['series']}
-
-
-def sanity_check():
-    return dict()

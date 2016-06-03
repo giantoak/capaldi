@@ -21,7 +21,3 @@ def alg(df):
         return {'error': r.text}
 
     return dictified_json(r.json())
-
-
-def sanity_check():
-    return dict()
