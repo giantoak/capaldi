@@ -1,6 +1,6 @@
 from collections import defaultdict
-import numpy as np
 import pandas as pd
+import sys
 from tqdm import tqdm
 
 from .algs import base_bcp
@@ -26,7 +26,7 @@ error_str_dict = {
 def capaldi(df, algorithms='all'):
     """
     :param pandas.DataFrame df:
-    :param str|list algorithms:
+    :param str|list algorithms: list of algorithms, 'all', or 'alg,alg,...,alg'
     :returns: `dict` --
     """
 
@@ -175,3 +175,18 @@ def capaldi(df, algorithms='all'):
                 time_period_algs[algorithm](count_df)
 
     return result_dict
+
+
+def main(in_fpath, out_fpath):
+    import pickle
+    df = pd.read_csv(in_fpath)
+    result = capaldi(df)
+    with open(out_fpath, 'wb') as outfile:
+        pickle.dump(result, out_fpath)
+
+
+if __name__ == "__main__":
+    if len(sys.argv) == 3:
+        main(sys.argv[1], sys.argv[2])
+    else:
+        print('Usage: python capaldi.py <dataframe_csv> <outfile_path>')
