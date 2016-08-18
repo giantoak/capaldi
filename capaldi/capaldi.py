@@ -50,10 +50,11 @@ def capaldi(df, algorithms='all'):
                     '1D', '1W', '2W',
                     '1M', '2M', '3M', '6M']
 
-    if algorithms == 'all':
-        algorithms = list(xtab_algs) + list(time_period_algs)
+    if isinstance(algorithms, str):
+        if algorithms == 'all':
+            algorithms = list(xtab_algs) + list(time_period_algs)
     elif isinstance(algorithms, str):
-        algorithms = [algorithms]
+        algorithms = [alg.strip() for alg in algorithms.split(',')]
 
     time_period_algs = {alg: time_period_algs[alg]
                         for alg in time_period_algs
