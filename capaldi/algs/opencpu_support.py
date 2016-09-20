@@ -1,4 +1,4 @@
-opencpu_url = 'https://54326a7f.ngrok.io/ocpu'
+from .opencpu_config import opencpu_url
 opencpu_root = opencpu_url[:-5]
 
 MAX_RETRIES = 5
@@ -90,7 +90,7 @@ def dictified_json(ocpu_json_dict,
 
 
 def opencpu_url_fmt(*args):
-    return '{}/{}'.format(opencpu_url, url_fmt(args))
+    return '{}/{}'.format(opencpu_url, url_fmt(*args))
 
 
 def url_fmt(*args):
