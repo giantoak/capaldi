@@ -8,7 +8,6 @@ def alg(df):
     from ..opencpu_support import opencpu_url_fmt
     from ..opencpu_support import request_with_retries
     from ..opencpu_support import r_ts_fmt
-    import pandas as pd
 
     url = opencpu_url_fmt('library',  # 'github', 'giantoak',
                           'goarima',

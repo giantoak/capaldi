@@ -8,8 +8,6 @@ def alg(dates, values, bp):
     """
     from ..opencpu_support import opencpu_url_fmt
     from ..opencpu_support import r_ts_fmt
-    from ..opencpu_support import request_with_retries
-    from ..opencpu_support import opencpu_root
     from ..opencpu_support import unorthodox_request_with_retries
 
     url = opencpu_url_fmt('library',  # 'github', 'google',
