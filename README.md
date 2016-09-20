@@ -57,10 +57,10 @@ Algorithm |Source
 Bayesian Structural Time Series / Google Causal Impact |[source](https://google.github.io/CausalImpact/CausalImpact.html)
 Seasonal Hybrid ESD (S-H-ESD) / Twitter Anomaly Detection |[source](https://github.com/twitter/AnomalyDetection)
 E-Divisive With Medians (EDM) / Twitter Breakout Detection |[source](https://github.com/twitter/BreakoutDetection)
+Kalman Filters |[source](https://pykalman.github.io/)
 
 #### Planned
 
 Algorithm |Source
 :--- |:---
-Kalman Filters |[source](https://pykalman.github.io/)
 ... |...
