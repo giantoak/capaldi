@@ -67,30 +67,6 @@ def capaldi(df, algorithms_to_run):
     # Set up crosstabs if we need them.
     # Write to a temporary file
 
-    if len(xtab_algs) > 0:
-
-        df['hhour'] = df.date_col.apply(lambda x: x.hour*2 + int(x.minute*2./60))
-        df['hour'] = df.date_col.apply(lambda x: x.hour)
-        df['wday'] = df.date_col.apply(lambda x: x.weekday())
-        df['mday'] = df.date_col.apply(lambda x: x.day)
-        df['yweek'] = df.date_col.apply(lambda x: x.week)
-        df['mweek'] = df.date_col.apply(lambda x: int(x.day/7)+1)
-        df['month'] = df.date_col.apply(lambda x: x.month)
-        df['year'] = df.date_col.apply(lambda x: x.year)
-
-        for col in time_map:
-            df[col] = df[col].astype('category',
-                                     categories=list(range(time_map[col])),
-                                     ordered=True)
-
-        df.year = df.year.astype('category',
-                                 categories=list(range(df.year.min(), df.year.max()+1)),
-                                 ordered=True)
-
-        xtab_fpath = os.path.join(working_dir, 'base_xtab_file.csv')
-        df.to_csv(xtab_fpath, index=False)
-        df = df.loc[:, ['date_col', 'count_col']]
-
     result_dict = dict()
     for algorithm in algorithms_to_run:
         result_dict[algorithm] = defaultdict(dict)
