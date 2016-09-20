@@ -1,3 +1,5 @@
+h5py
+luigi
 numpy
 pandas
 pykalman
