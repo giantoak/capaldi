@@ -23,4 +23,10 @@ class CapaldiRunner(luigi.WrapperTask):
 
         if 'mmpp' in self.algs_to_run:
             for t_p in time_pairs:
+                if 'wday' not in t_p:
+                    continue
+
+                # TODO integrate wday swap (or patch MMPP)
+                # TODO integrate poisson check
+
                 yield GiantOakMMPP(self.working_dir, t_p[0], t_p[1])
