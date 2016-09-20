@@ -6,7 +6,7 @@ def alg(dates, values):
     :returns: `str` --
     """
     from collections import OrderedDict
-    import simplejson as json
+    import ujson as json
     from ..opencpu_support import opencpu_url_fmt
     from ..opencpu_support import MAX_RETRIES
     import requests
