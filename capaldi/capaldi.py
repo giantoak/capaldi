@@ -3,12 +3,15 @@ import os
 import pandas as pd
 import shutil
 import sys
-from tempfile import NamedTemporaryFile
 from tempfile import mkdtemp
 from tqdm import tqdm
 
+from .CapaldiRunner import CapaldiRunner
+
+from .algs import GiantOakMMPP
+
 from algs import base_bcp
-from algs import giant_oak_mmpp
+# from algs import giant_oak_mmpp
 from algs import giant_oak_arima
 # from .algs import google_causal_impact
 # from .algs import twitter_anomaly_detection
@@ -20,8 +23,9 @@ from checks import isnt_poisson
 
 all_xtab_algs = {'mmpp': giant_oak_mmpp.alg}
 all_time_period_algs = {'arima': giant_oak_arima.alg,
-                    'bcp': base_bcp.alg,
-                    'twitter_breakout': twitter_breakout.alg}
+                        'bcp': base_bcp.alg,
+                        'twitter_breakout': twitter_breakout.alg}
+
 
 def capaldi(df, algorithms_to_run):
     """
@@ -63,6 +67,8 @@ def capaldi(df, algorithms_to_run):
 
     df.columns = ['date_col', 'count_col']
     df = df.sort_values('date_col')
+
+    df.to_hdf(os.path.join(working_dir, 'base_df.h5'), 'base_df')
 
     # Set up crosstabs if we need them.
     # Write to a temporary file
@@ -136,17 +142,21 @@ def capaldi(df, algorithms_to_run):
 
 
 def main(in_fpath, out_fpath, algs):
-    import pickle
-    df = pd.read_csv(in_fpath)
+    from tempfile import mkdtemp
+    import shutil
+
     if algs == ['all']:
         algs = list(all_xtab_algs) + list(all_time_period_algs)
-    result = capaldi(df, algs)
-    with open(out_fpath, 'wb') as outfile:
-        pickle.dump(result, outfile)
+
+    working_dir = mkdtemp()
+    CapaldiRunner(in_fpath, working_dir, algs)
+
+    os.rename(os.path.join(working_dir, 'results.h5'), out_fpath)
+    shutil.rmtree(working_dir)
 
 
 if __name__ == "__main__":
     if len(sys.argv) >= 3:
         main(sys.argv[1], sys.argv[2], sys.argv[3:])
     else:
-        print('Usage: python capaldi.py <dataframe_csv> <outfile_path> <alg> [<alg 2> <alg 3>...]')
+        print('Usage: python capaldi.py <dataframe_csv> <outfile_hdf5> <alg> [<alg 2> <alg 3>...]')
