@@ -1,10 +1,13 @@
 import h5py
+import ujson as json
 import luigi
 import numpy as np
 import os
 import pandas as pd
 
 from ..XTabDataFrameHDF import XTabDataFrameHDF
+
+from ..checks.IsntPoisson import IsntPoisson
 
 from .opencpu_support import r_array_fmt
 from .opencpu_support import opencpu_url_fmt
@@ -24,10 +27,24 @@ class GiantOakMMPP(luigi.Task):
     hdf_out_key = luigi.Parameter(default='mmpp')
 
     def requires(self):
-        return XTabDataFrameHDF(self.working_dir)
+        return {'file': XTabDataFrameHDF(self.working_dir),
+                'error_checks': {
+                    'isnt_poisson': IsntPoisson(
+                        XTabDataFrameHDF(self.working_dir),
+                        [self.count_col,
+                         self.time_col_one,
+                         self.time_col_two])
+                  }
+                }
 
     def run(self):
-        xtab = pd.pivot_table(pd.read_csv(self.requires(),
+        for error_key in self.requires()['error_checks']:
+            jsn = json.loads(open(self.requires()[error_key]).read())
+            if not jsn['result']:
+                self.write_result(jsn)
+                return
+
+        xtab = pd.pivot_table(pd.read_csv(self.requires()['file'],
                                           usecols=[self.count_col,
                                                    self.time_col_one,
                                                    self.time_col_two]),
@@ -35,6 +52,12 @@ class GiantOakMMPP(luigi.Task):
                               self.time_col_one,
                               self.time_col_two,
                               aggfunc=sum).fillna(0)
+
+
+        # Transpose data - need to check MMPP
+        # to confirm that this can be removed.
+        if self.time_col_one != 'wday' and self.time_col_two == 'wday':
+            xtab = xtab.T
 
         xtab_vals = ','.join([str(x) for x in np.ravel(xtab)])
 
