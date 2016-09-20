@@ -18,14 +18,6 @@ from checks import too_few_buckets
 from checks import too_many_empties
 from checks import isnt_poisson
 
-
-error_str_dict = {
-    "type": "Capaldi requires an object that can be converted "
-    "to a two-column data frame.",
-    "date_col": "The left column must be dates or times.",
-    "count_col": "The right column must be integers or floats."
-}
-
 all_xtab_algs = {'mmpp': giant_oak_mmpp.alg}
 all_time_period_algs = {'arima': giant_oak_arima.alg,
                     'bcp': base_bcp.alg,
