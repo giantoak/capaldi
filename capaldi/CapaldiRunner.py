@@ -1,12 +1,11 @@
 import luigi
-import shutil
-from tempfile import mkdtemp
 
 from .config import time_pairs
+from .config import time_periods
 
 from .BaseDataFrameHDF import BaseDataFrameHDF
 from .algs.GiantOakMMPP import GiantOakMMPP
-
+from .algs.GiantOakARIMA import GiantOakARIMA
 
 class CapaldiRunner(luigi.WrapperTask):
 
@@ -26,7 +25,11 @@ class CapaldiRunner(luigi.WrapperTask):
                 if 'wday' not in t_p:
                     continue
 
-                # TODO integrate wday swap (or patch MMPP)
-                # TODO integrate poisson check
-
                 yield GiantOakMMPP(self.working_dir, t_p[0], t_p[1])
+
+
+        for time_period in time_periods:
+            for alg in self.algs_to_run
+                if alg == 'arima':
+                    yield GiantOakARIMA(self.working_dir, time_period)
+
