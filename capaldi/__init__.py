@@ -1,4 +1,4 @@
-from .capaldi import capaldi
+from .CapaldiRunner import CapaldiRunner
 
 __title__ = 'capaldi'
 __version__ = '0.0.1'
