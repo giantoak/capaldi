@@ -2,22 +2,25 @@ import luigi
 import os
 import pandas as pd
 
-from .BaseDataFrameHDF import BaseDataFrameHDF
-from .config import time_map
+from .BaseDataFrameCSV import BaseDataFrameCSV
+
+from capaldi.config import time_map
 
 
-class XTabDataFrameHDF(luigi.Task):
+class XTabDataFrameCSV(luigi.Task):
 
     working_dir = luigi.Parameter()
-    hdf_out_name = luigi.Parameter(default='base_xtab.h5')
-    hdf_out_key = luigi.Parameter(default='base_xtab')
+    out_fname = luigi.Parameter(default='base_xtab.csv')
 
     def requires(self):
-        return BaseDataFrameHDF(self.working_dir)
+        return BaseDataFrameCSV(self.working_dir)
 
     def run(self):
 
-        df = pd.read_hdf(self.requires())
+        with self.input().open('r') as infile:
+            df = pd.read_csv(infile, parse_dates=['date_col'])
+
+        df.date_col = pd.to_datetime(df.date_col)
 
         df['hhour'] = df.date_col.apply(lambda x: x.hour * 2 + int(x.minute * 2. / 60))
         df['hour'] = df.date_col.apply(lambda x: x.hour)
@@ -37,7 +40,8 @@ class XTabDataFrameHDF(luigi.Task):
                                  categories=list(range(df.year.min(), df.year.max() + 1)),
                                  ordered=True)
 
-        df.to_hdf(self.output(), self.hdf_out_key)
+        with self.output().open('w') as outfile:
+            df.to_csv(outfile, index=False)
 
     def output(self):
-        return luigi.LocalTarget(os.path.join(self.working_dir, self.hdf_out_name))
+        return luigi.LocalTarget(os.path.join(self.working_dir, self.out_fname))

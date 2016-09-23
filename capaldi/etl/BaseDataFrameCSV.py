@@ -2,7 +2,7 @@ import luigi
 import os
 import pandas as pd
 
-from .BaseDataFrameCSV import BaseDataFrameCSV
+from .OriginalDataFrameCSV import OriginalDataFrameCSV
 
 error_str_dict = {
     "type": "Capaldi requires an object that can be converted "
@@ -12,18 +12,17 @@ error_str_dict = {
 }
 
 
-class BaseDataFrameHDF(luigi.ExternalTask):
-    dataframe_csv = luigi.Parameter()
+class BaseDataFrameCSV(luigi.ExternalTask):
+    in_fpath = luigi.Parameter()
     working_dir = luigi.Parameter()
-    hdf_out_name = luigi.Parameter(default='base_df.h5')
-    hdf_out_key = luigi.Parameter(default='base_df')
+    out_fname = luigi.Parameter(default='base_df.csv')
 
     def requires(self):
-        return BaseDataFrameCSV(self.dataframe_csv)
+        return OriginalDataFrameCSV(self.in_fpath)
 
     def run(self):
-
-        df = pd.read_csv(self.requires())
+        with self.input().open('r') as infile:
+            df = pd.read_csv(infile)
 
         if not isinstance(df, pd.DataFrame):
             if isinstance(pd.Series, df):
@@ -36,18 +35,21 @@ class BaseDataFrameHDF(luigi.ExternalTask):
                                               error_str_dict['date_col'],
                                               error_str_dict['count_col']]))
 
+        df.columns = ['date_col', 'count_col']
+
         try:
-            df.iloc[:, 0] = pd.to_datetime(df.iloc[:, 0])
+            df.date_col = pd.to_datetime(df.date_col)
         except:
             raise TypeError(error_str_dict['date_col'])
 
-        if df.iloc[:, 1].dtype not in ['int64', 'float64']:
+        if df.count_col.dtype not in ['int64', 'float64']:
             raise TypeError(error_str_dict['count_col'])
 
         df.columns = ['date_col', 'count_col']
         df = df.sort_values('date_col')
 
-        df.to_hdf(self.output(), self.hdf_out_key)
+        with self.output().open('w') as outfile:
+            df.to_csv(outfile, index=False)
 
     def output(self):
-        return os.path.join(self.working_dir, self.hdf_name)
+        return luigi.LocalTarget(os.path.join(self.working_dir, self.out_fname))
