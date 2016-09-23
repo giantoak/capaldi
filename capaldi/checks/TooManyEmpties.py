@@ -4,7 +4,7 @@ import numpy as np
 import os
 import pandas as pd
 
-from .check_values import MAX_EMPTY_PROPORTION
+from capaldi.checks.check_values import MAX_EMPTY_PROPORTION
 
 
 class TooManyEmpties(luigi.Task):
@@ -18,7 +18,9 @@ class TooManyEmpties(luigi.Task):
         return self.df_to_use
 
     def run(self):
-        df = pd.read_hdf(self.requires())
+
+        with self.input().open('r') as infile:
+            df = pd.read_csv(infile)
 
         result_dict = dict()
 
@@ -30,7 +32,7 @@ class TooManyEmpties(luigi.Task):
         else:
             result_dict['result'] = False
 
-        with open(self.output(), 'wb') as outfile:
+        with self.output().open('wb') as outfile:
             json.dump(result_dict, outfile)
 
     def output(self):

@@ -6,11 +6,12 @@ import os
 import pandas as pd
 from scipy.stats import chisquare
 
-from .check_values import POISSON_P_CUTOFF
+from capaldi.checks.check_values import POISSON_P_CUTOFF
 
 
 class IsntPoisson(luigi.Task):
 
+    working_dir = luigi.Parameter()
     df_to_use = luigi.TaskParameter()
     cols_to_use = luigi.ListParameter(default=[])
     output_fname = luigi.Parameter(default='IsntPoisson_{}.json'.format(cols_to_use))
@@ -19,7 +20,9 @@ class IsntPoisson(luigi.Task):
         return self.df_to_use
 
     def run(self):
-        xtab = pd.read_hdf(self.requires(), columns=self.cols_to_use)
+
+        with self.input().open('r') as infile:
+            xtab = pd.read_csv(infile, columns=self.cols_to_use)
 
         xtab_vals = np.ravel(xtab)
         sim_vals = npr.poisson(np.mean(xtab_vals), len(xtab_vals))
@@ -35,7 +38,7 @@ class IsntPoisson(luigi.Task):
         else:
             result_dict['result'] = False
 
-        with open(self.output(), 'wb') as outfile:
+        with self.output().open('wb') as outfile:
             json.dump(result_dict, outfile)
 
     def output(self):
