@@ -7,4 +7,4 @@ pykalman
 requests
 scipy
 ujson
-tqdm
+tqdm  # might not be needed once luigification is complete
