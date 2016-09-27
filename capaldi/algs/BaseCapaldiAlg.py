@@ -1,6 +1,8 @@
 import h5py
 import luigi
 import os
+import pandas as pd
+import ujson as json
 
 
 class BaseCapaldiAlg(luigi.Task):
@@ -9,24 +11,50 @@ class BaseCapaldiAlg(luigi.Task):
     """
     working_dir = luigi.Parameter()
     time_col = luigi.Parameter()
-    hdf_out_name = luigi.Parameter(default='results.h5')
-    hdf_out_key = luigi.Parameter(default='unset')
+    json_out_fname = luigi.Parameter()
+    wrapper_keys = luigi.ListParameter(default=[])
+    count_col = luigi.Parameter(default='count_col')
 
-    def write_result_to_hdf5(self, sub_key=None, dict_to_write=None):
+    def load_dataframe(self):
         """
-        Helper func to smooth insertion into hdf5
+        Function that loads dataframe for use by algorithm.
+        Assumes that we can just load the data as-is,
+        Override as needed (e.g. GiantOakMMPP)
+        :returns: `pandas.DataFrame` -- DataFrame for alg
         """
-        if dict_to_write is None:
-            dict_to_write = dict()
+        with self.input()['file'].open('r') as infile:
+            df = pd.read_csv(infile, parse_dates=['date_col'])
 
-        if sub_key is None:
-            key = self.hdf_out_key
-        else:
-            key = '{}/{}'.format(self.hdf_out_key, sub_key)
+        return df
 
-        with h5py.File(self.output().path) as outfile:
-            outfile[key] = dict_to_write
+    def alg(self, df):
+        """
+        Function that WILL BE OVERRIDDEN in sub classes
+        Defines the TS Algorithm
+        :param pandas.DataFrame df:
+        :returns: `dict` -- dictionary of algorithm results
+        """
+        return dict()
+
+    def run(self):
+        for key in self.input()['error_checks']:
+            with self.input()['error_checks'][key].open('r') as infile:
+                jsn = json.load(infile)
+                if not jsn['result']:
+                    self.write_results_to_json({key: jsn})
+                    return
+
+        df = self.load_dataframe()
+        result_dict = self.alg(df)
+        self.write_results_to_json(result_dict)
+
+    def write_results_to_json(self, dict_to_write):
+        for key in self.wrapper_keys:
+            dict_to_write = {key: dict_to_write}
+
+        with self.output().open('wb') as outfile:
+            json.dump(dict_to_write, outfile)
 
     def output(self):
         return luigi.LocalTarget(os.path.join(self.working_dir,
-                                              self.hdf_out_name))
+                                              self.json_out_fname))

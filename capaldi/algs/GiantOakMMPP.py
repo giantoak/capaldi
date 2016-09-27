@@ -15,46 +15,37 @@ from capaldi.algs.opencpu_support import request_with_retries
 
 class GiantOakMMPP(BaseCapaldiAlg):
     time_col_two = luigi.Parameter()
-    hdf_out_key = luigi.Parameter(default='mmpp')
 
     def requires(self):
-        return {'file': etl.XTabDataFrameCSV(self.working_dir),
+        cur_df = etl.XTabDataFrameCSV(working_dir=self.working_dir)
+        return {'file': cur_df,
                 'error_checks': {
                     'isnt_poisson': checks.IsntPoisson(
-                        etl.XTabDataFrameCSV(self.working_dir),
-                        [self.count_col,
+                        cur_df,
+                        ['count_col',
                          self.time_col,
                          self.time_col_two])
                   }
                 }
 
-    def run(self):
-
-        # Only run if wday column exists.
-        # An issue to be fixed with the MMPP.
-        if self.time_col != 'wday' and self.time_col_two != 'wday':
-            return
-
-        for error_key in self.requires()['error_checks']:
-            jsn = json.loads(open(self.requires()[error_key]).read())
-            if not jsn['result']:
-                self.write_result(jsn)
-                return
-
+    def load_dataframe(self):
         with self.input()['file'].open('r') as infile:
             xtab = pd.pivot_table(pd.read_csv(infile,
-                                              usecols=[self.count_col,
+                                              usecols=['count_col',
                                                        self.time_col,
                                                        self.time_col_two]),
-                                  self.count_col,
+                                  'count_col',
                                   self.time_col,
                                   self.time_col_two,
                                   aggfunc=sum).\
                 fillna(0)
 
+        return xtab
 
-        # Transpose data - need to check MMPP
-        # to confirm that this can be removed.
+    def alg(self, xtab):
+
+        # Transpose data
+        # Need to check MMPP to confirm that this can be removed.
         if self.time_col != 'wday':
             xtab = xtab.T
 
@@ -75,17 +66,37 @@ class GiantOakMMPP(BaseCapaldiAlg):
         r = request_with_retries([url, params])
 
         if not r.ok:
-            result_dict = {'error': r.txt}
+            return {'error': r.txt}
+
+        r_json = r.json()
+        return {key: json.loads(pd.DataFrame(np.array(r_json[key]).reshape(xtab.shape),
+                                             index=xtab.index,
+                                             columns=xtab.columns).to_json())
+                for key in r_json()}
+
+    def run(self):
+
+        result_dict = None
+
+        # Verify that wday is in the data.
+        # Need to fix MMPP so that this can be removed
+        if self.time_col != 'wday' and self.time_col_two != 'wday':
+            result_dict = {'error': 'No "wday" field'}
 
         else:
-            r_json = r.json()
-            result_dict = {key: pd.DataFrame(np.
-                                             array(r_json[key]).
-                                             reshape(xtab.shape),
-                                             index=xtab.index,
-                                             columns=xtab.columns)
-                           for key in r_json}
+            for error_check in self.input()['error_checks']:
+                with error_check.open('r') as infile:
+                    jsn = json.load(infile)
+                    if not jsn['result']:
+                        result_dict = jsn
+                        break
 
-        self.write_result_to_hdf5('{}_{}'.format(self.time_col,
-                                                 self.time_col_two),
-                                  result_dict)
+        if result_dict is None:
+            df = self.load_dataframe()
+            result_dict = self.alg(df)
+
+        for key in self.wrapper_keys:
+            result_dict = {key: result_dict}
+
+        with self.output().open('wb') as outfile:
+            json.dump(result_dict, outfile)
