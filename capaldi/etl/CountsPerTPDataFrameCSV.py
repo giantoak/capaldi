@@ -9,10 +9,9 @@ class CountsPerTPDataFrameCSV(luigi.Task):
 
     working_dir = luigi.Parameter()
     time_period = luigi.Parameter()
-    out_fname = luigi.Parameter(default='count_{}.csv'.format(time_period))
 
     def requires(self):
-        return BaseDataFrameCSV(self.working_dir)
+        return BaseDataFrameCSV(working_dir=self.working_dir)
 
     def run(self):
 
@@ -30,4 +29,5 @@ class CountsPerTPDataFrameCSV(luigi.Task):
             df.to_csv(outfile, index=False)
 
     def output(self):
-        return luigi.LocalTarget(os.path.join(self.working_dir, self.out_fname))
+        return luigi.LocalTarget(os.path.join(self.working_dir,
+                                              'count_{}.csv'.format(self.time_period)))
