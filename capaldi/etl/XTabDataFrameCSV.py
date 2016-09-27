@@ -13,7 +13,7 @@ class XTabDataFrameCSV(luigi.Task):
     out_fname = luigi.Parameter(default='base_xtab.csv')
 
     def requires(self):
-        return BaseDataFrameCSV(self.working_dir)
+        return BaseDataFrameCSV(working_dir=self.working_dir)
 
     def run(self):
 
