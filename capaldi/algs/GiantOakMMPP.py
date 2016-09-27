@@ -21,13 +21,15 @@ class GiantOakMMPP(BaseCapaldiAlg):
         return {'file': cur_df,
                 'error_checks': {
                     'isnt_poisson': checks.IsntPoisson(
-                        cur_df,
-                        ['count_col',
+                        working_dir=self.working_dir,
+                        df_to_use=cur_df,
+                        cols_to_use=['count_col',
                          self.time_col,
-                         self.time_col_two])
+                         self.time_col_two],
+                        output_suffix='{}_{}'.format(self.time_col,
+                                                     self.time_col_two))
                   }
                 }
-
     def load_dataframe(self):
         with self.input()['file'].open('r') as infile:
             xtab = pd.pivot_table(pd.read_csv(infile,
